@@ -3,6 +3,7 @@ package com.face_detectin.face_detection;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfRect;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.objdetect.CascadeClassifier;
 import org.springframework.core.io.Resource;
@@ -77,10 +78,36 @@ public class FaceDetectionService {
             throw new IllegalArgumentException("Failed to load image: " + imageName);
         }
 
-        MatOfRect faceDetections = new MatOfRect();
-        cascadeClassifier.detectMultiScale(image, faceDetections);
 
-        return !faceDetections.empty();
+        // Check image size
+//        if (image.width() < 320 || image.height() < 240) {
+//            throw new IllegalArgumentException("Image is too small. Minimum size is 320x240 pixels");
+//        }
+//        if (image.width() > 4096 || image.height() > 4096) {
+//            throw new IllegalArgumentException("Image is too large. Maximum size is 4096x4096 pixels");
+//        }
+
+        MatOfRect faceDetections = new MatOfRect();
+
+        // Improved detection parameters
+        double scaleFactor = 1.1;  // How much the image size is reduced at each image scale
+        int minNeighbors = 5;      // Higher number gives less detections but with higher quality
+        int flags = 0;             // Parameter indicating the type of Haar feature
+        Size minSize = new Size(30, 30);  // Minimum possible face size
+        Size maxSize = new Size();        // Maximum possible face size (0,0 means no limit)
+
+        cascadeClassifier.detectMultiScale(
+                image,
+                faceDetections,
+                scaleFactor,
+                minNeighbors,
+                flags,
+                minSize,
+                maxSize
+        );
+
+        // Check confidence level
+        return !faceDetections.empty() && faceDetections.toArray().length > 0;
     }
 
     public boolean hasHumanFaceBase64(String base64Image) {
